@@ -1,0 +1,39 @@
+name: 'Automated-Image-Builder'
+on:
+  workflow_dispatch:
+    
+permissions:
+      id-token: write
+      contents: read
+
+jobs:
+  packer:
+    runs-on: ubuntu-latest
+    name: Run Packer
+    env:
+        ### AZURE Client details ###
+        ARM_CLIENT_ID: ${{ secrets.ClientID }}
+        ARM_SUBSCRIPTION_ID: ${{ secrets.SubscriptionID }}
+        ARM_TENANT_ID: ${{ secrets.TenantID }}
+        ARM_USE_OIDC: true
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+
+    - name: Setup `packer`
+      uses: hashicorp/setup-packer@main
+      id: setup
+      with:
+        version: "latest"
+
+    - name: Run `packer init`
+      id: init
+      run: "packer init ./Templates/W11"
+
+    - name: Run `packer validate`
+      id: validate
+      run: "packer validate -var 'client_id=${{ secrets.CLIENTID }}' -var 'client_secret=${{ secrets.CLIENTSECRET }}' -var 'subscription_id=${{ secrets.SUBSCRIPTIONID }}' -var 'tenant_id=${{ secrets.TENANTID }}' ./Templates/W11"
+
+    - name: Run `packer build`
+      id: build
+      run: "packer build -var 'client_id=${{ secrets.CLIENTID }}' -var 'client_secret=${{ secrets.CLIENTSECRET }}' -var 'subscription_id=${{ secrets.SUBSCRIPTIONID }}' -var 'tenant_id=${{ secrets.TENANTID }}' ./Templates/W11"
